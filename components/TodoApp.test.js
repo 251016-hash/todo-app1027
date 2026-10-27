@@ -31,3 +31,34 @@ test('localStorage に保存された TODO が最初から表示される', () =
   expect(screen.getByRole('checkbox', { name: '保存済みの TODO' })).toBeChecked()
   expect(screen.getByText(/残り\s*0\s*件/)).toBeInTheDocument()
 })
+
+test('空白だけでは TODO は増えない', async () => {
+  const user = userEvent.setup()
+  render(<TodoApp />)
+  await user.type(screen.getByRole('textbox', { name: 'やること' }), '   {Enter}')
+  expect(screen.getByText('やることはありません')).toBeInTheDocument()
+  expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+})
+
+test('空のまま追加するとエラーメッセージが出る', async () => {
+
+  const user = userEvent.setup()
+  render(<TodoForm onAdd={jest.fn()} />)
+  await user.click(screen.getByRole('button', { name: '追加' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('やることを入力してください')
+})
+
+test('入力を始めるとエラーメッセージが消える', async () => {
+  const user = userEvent.setup()
+  render(<TodoForm onAdd={jest.fn()} />)
+  await user.click(screen.getByRole('button', { name: '追加' }))
+  await user.type(screen.getByRole('textbox', { name: 'やること' }), 'a')
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('普通に追加したときはエラーメッセージが出ない', async () => {
+  const user = userEvent.setup()
+  render(<TodoForm onAdd={jest.fn()} />)
+  await user.type(screen.getByRole('textbox', { name: 'やること' }), '牛乳を買う{Enter}')
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
